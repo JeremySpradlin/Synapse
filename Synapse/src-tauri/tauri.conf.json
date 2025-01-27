@@ -52,7 +52,7 @@
         "height": 600,
         "resizable": true,
         "title": "Synapse",
-        "width": 800,
+        "width": 1152,
         "decorations": false,
         "transparent": true,
         "visible": false
