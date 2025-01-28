@@ -43,6 +43,10 @@ class WindowManager {
   private mainWindow: Awaited<ReturnType<typeof getCurrent>>
   /** Stores the last focused element for focus restoration */
   private lastFocusedElement: HTMLElement | null = null
+  /** Reference to the chat input element */
+  private chatInput: HTMLInputElement | null = null
+  /** Reference to the send button */
+  private sendButton: HTMLButtonElement | null = null
 
   constructor() {
     this.mainWindow = getCurrent()
@@ -54,11 +58,51 @@ class WindowManager {
    */
   private async initWindow() {
     try {
+      // Initialize chat elements
+      this.chatInput = document.querySelector('.chat-input')
+      this.sendButton = document.querySelector('.send-button')
+      
+      // Setup event handlers
       await this.setupEventListeners()
       this.setupKeyboardTrapping()
       this.setupFocusManagement()
+      this.setupChatHandlers()
     } catch (err) {
       console.error('Failed to initialize window:', err)
+    }
+  }
+
+  /**
+   * Sets up chat-specific event handlers
+   */
+  private setupChatHandlers() {
+    if (!this.chatInput || !this.sendButton) return
+
+    // Handle send button click
+    this.sendButton.addEventListener('click', () => {
+      this.handleSendMessage()
+    })
+
+    // Handle enter key in input
+    this.chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        this.handleSendMessage()
+      }
+    })
+  }
+
+  /**
+   * Handles sending a message
+   */
+  private handleSendMessage() {
+    if (!this.chatInput) return
+
+    const message = this.chatInput.value.trim()
+    if (message) {
+      // TODO: Implement message sending logic
+      console.log('Sending message:', message)
+      this.chatInput.value = ''
     }
   }
 
@@ -170,13 +214,24 @@ class WindowManager {
       this.state.targetY = 0
       this.state.currentY = this.state.initialY
       
-      // Focus the first focusable element
-      this.focusFirstElement()
+      // Focus the chat input
+      this.focusChatInput()
       
       void this.animateWindow(centerX)
     } catch (err) {
       console.error('Failed to show window:', err)
     }
+  }
+
+  /**
+   * Focuses the chat input
+   */
+  private focusChatInput() {
+    setTimeout(() => {
+      if (this.chatInput) {
+        this.chatInput.focus()
+      }
+    }, 100)
   }
 
   /**
@@ -200,16 +255,6 @@ class WindowManager {
   }
 
   /**
-   * Focuses the first focusable element in the window
-   */
-  private focusFirstElement() {
-    setTimeout(() => {
-      const firstFocusable = this.getFocusableElements()[0]
-      firstFocusable?.focus()
-    }, 100)
-  }
-
-  /**
    * Cleans up window state before hiding
    */
   private cleanupBeforeHide() {
@@ -219,6 +264,11 @@ class WindowManager {
     // Clear focus
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur()
+    }
+
+    // Clear input
+    if (this.chatInput) {
+      this.chatInput.value = ''
     }
   }
 

@@ -6,6 +6,25 @@
   filter: drop-shadow(0 0 2em #2d79c7);
 }
 :root {
+  /* Color Variables */
+  --bg-primary: #1a1b1e;
+  --bg-secondary: #2c2e33;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --accent-primary: #6366f1;
+  --accent-hover: #818cf8;
+  --border-color: #3f3f46;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  
+  /* Other */
+  --border-radius: 8px;
+  --transition-speed: 0.2s;
+
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
@@ -112,5 +131,230 @@ button {
   }
   button:active {
     background-color: #0f0f0f69;
+  }
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* App Container */
+#app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background-color: var(--bg-primary);
+  /* Prevent text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Chat Container */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  overflow: hidden;
+  /* Better touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Header */
+.chat-header {
+  padding: var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  /* Prevent header from shrinking */
+  flex-shrink: 0;
+}
+
+.settings-button {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-speed) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Remove touch highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Better touch target size */
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.settings-button:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  /* Smoother icons on webkit */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Chat History */
+.chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  /* Enable text selection in chat history */
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Scrollbar Styling */
+.chat-history::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-history::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+.chat-history::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.chat-history::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Firefox scrollbar */
+.chat-history {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-primary);
+}
+
+/* Input Area */
+.chat-input-area {
+  padding: var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: var(--spacing-sm);
+  min-height: 64px;
+  /* Prevent input area from shrinking */
+  flex-shrink: 0;
+  /* Ensure input area stays above virtual keyboard on mobile */
+  position: relative;
+  z-index: 1;
+}
+
+.chat-input {
+  flex: 1;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: border-color var(--transition-speed) ease;
+  /* Enable text selection in input */
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  /* Remove iOS input styling */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.send-button {
+  background-color: var(--accent-primary);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm);
+  width: 40px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-speed) ease;
+  /* Remove touch highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Better touch target size */
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.send-button:hover {
+  background-color: var(--accent-hover);
+}
+
+.send-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  /* Smoother icons on webkit */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Focus Styles */
+.settings-button:focus-visible,
+.chat-input:focus-visible,
+.send-button:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* High-contrast mode support */
+@media (forced-colors: active) {
+  .settings-button,
+  .send-button {
+    border: 1px solid currentColor;
+  }
+  
+  .chat-input {
+    border: 1px solid currentColor;
   }
 }
