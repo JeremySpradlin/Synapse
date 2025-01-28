@@ -7,6 +7,14 @@
 
 import { getCurrent, PhysicalPosition } from '@tauri-apps/api/window'
 
+/** Message interface for chat messages */
+interface ChatMessage {
+  id: string
+  content: string
+  timestamp: Date
+  type: 'sent' | 'received'
+}
+
 /** State interface for window position and animation */
 interface WindowState {
   /** Whether the window is currently visible */
@@ -19,6 +27,30 @@ interface WindowState {
   currentY: number
   /** Current animation frame ID */
   animationFrame: number | null
+}
+
+/**
+ * Creates a chat message element
+ */
+function createMessageElement(message: ChatMessage): HTMLDivElement {
+  const messageEl = document.createElement('div')
+  messageEl.className = `chat-message ${message.type}`
+  
+  const contentEl = document.createElement('div')
+  contentEl.className = 'message-content'
+  contentEl.textContent = message.content
+  
+  const timeEl = document.createElement('div')
+  timeEl.className = 'message-time'
+  timeEl.textContent = message.timestamp.toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })
+  
+  messageEl.appendChild(contentEl)
+  messageEl.appendChild(timeEl)
+  
+  return messageEl
 }
 
 /**
@@ -35,6 +67,9 @@ class WindowManager {
     animationFrame: null
   }
 
+  /** Chat messages array */
+  private messages: ChatMessage[] = []
+  
   /** Duration of show/hide animations in milliseconds */
   private readonly ANIMATION_DURATION = 300
   /** Easing function for smooth animations */
@@ -47,6 +82,8 @@ class WindowManager {
   private chatInput: HTMLInputElement | null = null
   /** Reference to the send button */
   private sendButton: HTMLButtonElement | null = null
+  /** Reference to the chat history element */
+  private chatHistory: HTMLDivElement | null = null
 
   constructor() {
     this.mainWindow = getCurrent()
@@ -61,6 +98,7 @@ class WindowManager {
       // Initialize chat elements
       this.chatInput = document.querySelector('.chat-input')
       this.sendButton = document.querySelector('.send-button')
+      this.chatHistory = document.querySelector('.chat-history')
       
       // Setup event handlers
       await this.setupEventListeners()
@@ -96,13 +134,63 @@ class WindowManager {
    * Handles sending a message
    */
   private handleSendMessage() {
-    if (!this.chatInput) return
+    if (!this.chatInput || !this.chatHistory) return
 
-    const message = this.chatInput.value.trim()
-    if (message) {
-      // TODO: Implement message sending logic
-      console.log('Sending message:', message)
+    const content = this.chatInput.value.trim()
+    if (content) {
+      // Create new message
+      const message: ChatMessage = {
+        id: crypto.randomUUID(),
+        content,
+        timestamp: new Date(),
+        type: 'sent'
+      }
+      
+      // Add message to state
+      this.messages.push(message)
+      
+      // Create and append message element
+      const messageEl = createMessageElement(message)
+      this.chatHistory.appendChild(messageEl)
+      
+      // Clear input and scroll to bottom
       this.chatInput.value = ''
+      this.scrollToBottom()
+      
+      // TODO: Handle message processing and response
+      this.simulateResponse()
+    }
+  }
+
+  /**
+   * Temporary function to simulate a response
+   * This will be replaced with actual message processing
+   */
+  private simulateResponse() {
+    setTimeout(() => {
+      const response: ChatMessage = {
+        id: crypto.randomUUID(),
+        content: 'This is a simulated response.',
+        timestamp: new Date(),
+        type: 'received'
+      }
+      
+      this.messages.push(response)
+      
+      if (this.chatHistory) {
+        const messageEl = createMessageElement(response)
+        this.chatHistory.appendChild(messageEl)
+        this.scrollToBottom()
+      }
+    }, 1000)
+  }
+
+  /**
+   * Scrolls the chat history to the bottom
+   */
+  private scrollToBottom() {
+    if (this.chatHistory) {
+      this.chatHistory.scrollTop = this.chatHistory.scrollHeight
     }
   }
 
