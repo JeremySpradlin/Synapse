@@ -2,15 +2,30 @@
   "name": "synapse",
   "private": true,
   "version": "0.1.0",
+  "description": "A modern application launcher and command palette",
+  "author": "erbun",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erbun/synapse"
+  },
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,html}\""
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.9",
+    "@types/node": "^20.0.0",
+    "prettier": "^3.2.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
   },

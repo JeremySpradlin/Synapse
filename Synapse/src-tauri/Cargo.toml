@@ -1,9 +1,12 @@
 [package]
 name = "synapse"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A modern application launcher and command palette"
+authors = ["erbun"]
+license = "MIT"
+repository = "https://github.com/erbun/synapse"
 edition = "2021"
+rust-version = "1.70"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -18,10 +21,13 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-serde_json = "1.0"
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Tauri
 tauri = { version = "1.5", features = [
-    "global-shortcut-all",
+    # Window Management
     "window-create",
     "window-hide",
     "window-show",
@@ -34,6 +40,19 @@ tauri = { version = "1.5", features = [
     "window-set-decorations",
     "window-set-always-on-top",
     "window-set-size",
-    "window-set-position"
+    "window-set-position",
+    
+    # System Integration
+    "global-shortcut-all",
+    "macos-private-api"
 ] }
+
+# UI Enhancement
 window-shadows = "0.2"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
