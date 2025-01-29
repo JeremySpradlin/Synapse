@@ -50,6 +50,12 @@ tauri = { version = "1.5", features = [
 # UI Enhancement
 window-shadows = "0.2"
 
+# Settings System
+tokio = { version = "1.0", features = ["full"] }
+thiserror = "1.0"
+keyring = "2.0"
+tempfile = "3.8"
+
 [profile.release]
 panic = "abort"
 codegen-units = 1

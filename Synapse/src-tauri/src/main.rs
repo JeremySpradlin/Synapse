@@ -6,43 +6,36 @@
 //! handling window management, global shortcuts, and system integration.
 
 use tauri::{
-    Manager, Window, GlobalShortcutManager,
-    PhysicalPosition, Monitor, LogicalPosition,
+    GlobalShortcutManager, Manager, PhysicalPosition, Monitor, Window,
 };
 
+mod settings;
+mod commands;
+
+use settings::SettingsManager;
+use window_shadows::set_shadow;
+
 /// Error type for window management operations
+#[derive(Debug, thiserror::Error)]
+pub enum WindowError {
+    #[error("Window operation failed: {0}")]
+    Operation(String),
+    
+    #[error("Window not found")]
+    NotFound,
+    
+    #[error("Invalid window state")]
+    InvalidState,
+}
+
 type WindowResult<T> = Result<T, Box<dyn std::error::Error>>;
-
-/// Gets the current window position
-/// 
-/// Returns a tuple of (x, y) coordinates representing the window's position
-/// on the screen. Returns (0, 0) if the position cannot be determined.
-#[tauri::command]
-fn get_window_position(window: Window) -> (i32, i32) {
-    window.outer_position()
-        .map(|pos| (pos.x, pos.y))
-        .unwrap_or((0, 0))
-}
-
-/// Sets the window position to the specified coordinates
-/// 
-/// # Arguments
-/// * `window` - The window to reposition
-/// * `x` - The x coordinate
-/// * `y` - The y coordinate
-#[tauri::command]
-fn set_window_position(window: Window, x: i32, y: i32) {
-    let _ = window.set_position(tauri::Position::Physical(
-        tauri::PhysicalPosition { x, y }
-    ));
-}
 
 /// Centers the window horizontally at the top of the specified monitor
 /// 
 /// # Arguments
 /// * `window` - The window to center
 /// * `monitor` - The monitor to center the window on
-fn center_window_horizontally(window: &Window, monitor: &Monitor) -> WindowResult<()> {
+pub(crate) fn center_window_horizontally(window: &Window, monitor: &Monitor) -> WindowResult<()> {
     let screen_size = monitor.size();
     let window_size = window.outer_size()?;
     
@@ -130,11 +123,26 @@ fn setup_global_shortcut(app: &tauri::App) -> WindowResult<()> {
     Ok(())
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    println!("Setting up application...");
+
+    let settings_manager = SettingsManager::new()
+        .await
+        .expect("Failed to initialize settings manager");
+
     tauri::Builder::default()
+        .manage(settings_manager)
+        .invoke_handler(tauri::generate_handler![
+            commands::get_window_position,
+            commands::set_window_position,
+            commands::get_settings,
+            commands::update_settings,
+            commands::store_api_key,
+            commands::get_api_key,
+            commands::delete_api_key,
+        ])
         .setup(|app| {
-            println!("Setting up application...");
-            
             let window = app.get_window("main")
                 .ok_or("Failed to get main window")?;
             
@@ -143,13 +151,12 @@ fn main() {
             setup_window(&window)?;
             setup_global_shortcut(app)?;
             
+            #[cfg(any(windows, target_os = "macos"))]
+            set_shadow(&window, true).expect("Failed to set window shadow");
+            
             println!("Window initialized and hidden");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            get_window_position,
-            set_window_position
-        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
