@@ -44,17 +44,20 @@ tauri = { version = "1.5", features = [
     
     # System Integration
     "global-shortcut-all",
-    "macos-private-api"
-] }
+    "macos-private-api"] }
 
 # UI Enhancement
 window-shadows = "0.2"
 
 # Settings System
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.36", features = ["full"] }
 thiserror = "1.0"
 keyring = "2.0"
 tempfile = "3.8"
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
 
 [profile.release]
 panic = "abort"

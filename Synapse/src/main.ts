@@ -84,10 +84,20 @@ class WindowManager {
   private sendButton: HTMLButtonElement | null = null
   /** Reference to the chat history element */
   private chatHistory: HTMLDivElement | null = null
+  /** Reference to the settings button */
+  private settingsButton: HTMLButtonElement | null = null
+
+  /** Focus management state */
+  private focusState = {
+    /** The element that should receive focus when window is shown */
+    defaultFocusTarget: null as HTMLElement | null,
+    /** The last focused element before window was hidden */
+    lastFocusedElement: null as HTMLElement | null,
+  }
 
   constructor() {
     this.mainWindow = getCurrent()
-    this.initWindow()
+    void this.initWindow()
   }
 
   /**
@@ -95,19 +105,45 @@ class WindowManager {
    */
   private async initWindow() {
     try {
-      // Initialize chat elements
-      this.chatInput = document.querySelector('.chat-input')
-      this.sendButton = document.querySelector('.send-button')
-      this.chatHistory = document.querySelector('.chat-history')
+      // Initialize UI elements
+      this.initializeUIElements()
       
-      // Setup event handlers
+      // Setup all event handlers
       await this.setupEventListeners()
-      this.setupKeyboardTrapping()
       this.setupFocusManagement()
+      this.setupKeyboardTrapping()
       this.setupChatHandlers()
+
+      // Set default focus target
+      if (this.chatInput) {
+        this.focusState.defaultFocusTarget = this.chatInput
+      }
     } catch (err) {
       console.error('Failed to initialize window:', err)
     }
+  }
+
+  /**
+   * Initializes UI element references
+   */
+  private initializeUIElements() {
+    this.chatInput = document.querySelector('.chat-input')
+    this.sendButton = document.querySelector('.send-button')
+    this.chatHistory = document.querySelector('.chat-history')
+    this.settingsButton = document.querySelector('.settings-button')
+
+    if (!this.chatInput || !this.sendButton || !this.chatHistory || !this.settingsButton) {
+      console.error('Failed to initialize UI elements')
+    }
+
+    // Set up settings button click handler
+    this.settingsButton?.addEventListener('click', async () => {
+      try {
+        await this.mainWindow.emit('open_settings')
+      } catch (err) {
+        console.error('Failed to open settings:', err)
+      }
+    })
   }
 
   /**
@@ -210,28 +246,6 @@ class WindowManager {
   }
 
   /**
-   * Sets up focus management for the window
-   */
-  private setupFocusManagement() {
-    // Store last focused element before window shows
-    document.addEventListener('focus', (e) => {
-      if (e.target instanceof HTMLElement) {
-        this.lastFocusedElement = e.target
-      }
-    }, true)
-
-    // Prevent focus from leaving the window when visible
-    document.addEventListener('focusin', (e) => {
-      if (!this.state.isVisible) return
-
-      const target = e.target as HTMLElement
-      if (!document.body.contains(target)) {
-        this.lastFocusedElement?.focus()
-      }
-    })
-  }
-
-  /**
    * Handles tab key navigation within the window
    */
   private handleTabKey(e: KeyboardEvent) {
@@ -270,15 +284,93 @@ class WindowManager {
    */
   private async setupEventListeners() {
     try {
+      // Window visibility events
       await this.mainWindow.listen('toggle_window', () => {
-        if (this.state.isVisible) {
-          void this.hideWindow()
-        } else {
-          void this.showWindow()
-        }
+        void this.toggleWindowVisibility()
+      })
+
+      // Window state events
+      await this.mainWindow.listen('window_shown', () => {
+        void this.handleWindowShown()
+      })
+
+      await this.mainWindow.listen('window_hidden', () => {
+        void this.handleWindowHidden()
       })
     } catch (err) {
       console.error('Failed to setup event listeners:', err)
+    }
+  }
+
+  /**
+   * Handles window visibility toggling
+   */
+  private async toggleWindowVisibility() {
+    if (this.state.isVisible) {
+      void this.hideWindow()
+    } else {
+      void this.showWindow()
+    }
+  }
+
+  /**
+   * Sets up focus management for the window
+   */
+  private setupFocusManagement() {
+    // Store focused element when focus changes within the window
+    document.addEventListener('focus', (e) => {
+      if (e.target instanceof HTMLElement && this.state.isVisible) {
+        this.focusState.lastFocusedElement = e.target
+      }
+    }, true)
+
+    // Prevent focus from leaving the window when visible
+    document.addEventListener('focusin', (e) => {
+      if (!this.state.isVisible) return
+
+      const target = e.target as HTMLElement
+      if (!document.body.contains(target)) {
+        this.restoreFocus()
+      }
+    })
+  }
+
+  /**
+   * Handles window shown event
+   */
+  private async handleWindowShown() {
+    this.state.isVisible = true
+    this.restoreFocus()
+  }
+
+  /**
+   * Handles window hidden event
+   */
+  private async handleWindowHidden() {
+    this.state.isVisible = false
+    this.cleanupBeforeHide()
+  }
+
+  /**
+   * Restores focus to the appropriate element
+   */
+  private restoreFocus() {
+    // Try to focus the last focused element
+    if (this.focusState.lastFocusedElement?.isConnected) {
+      this.focusState.lastFocusedElement.focus()
+      return
+    }
+
+    // Fall back to default focus target
+    if (this.focusState.defaultFocusTarget?.isConnected) {
+      this.focusState.defaultFocusTarget.focus()
+      return
+    }
+
+    // Last resort: focus first focusable element
+    const focusableElements = this.getFocusableElements()
+    if (focusableElements.length > 0) {
+      focusableElements[0].focus()
     }
   }
 
@@ -290,36 +382,21 @@ class WindowManager {
 
     try {
       await this.mainWindow.show()
-      
       const size = await this.mainWindow.innerSize()
       const screenWidth = window.innerWidth
       
       // Center window horizontally
       const centerX = (screenWidth - size.width) / 2
       
-      this.state.isVisible = true
       this.state.initialY = -600
       this.state.targetY = 0
       this.state.currentY = this.state.initialY
       
-      // Focus the chat input
-      this.focusChatInput()
-      
       void this.animateWindow(centerX)
+      await this.mainWindow.emit('window_shown', null)
     } catch (err) {
       console.error('Failed to show window:', err)
     }
-  }
-
-  /**
-   * Focuses the chat input
-   */
-  private focusChatInput() {
-    setTimeout(() => {
-      if (this.chatInput) {
-        this.chatInput.focus()
-      }
-    }, 100)
   }
 
   /**
@@ -329,14 +406,12 @@ class WindowManager {
     this.cancelCurrentAnimation()
     
     try {
-      this.state.isVisible = false
       this.state.initialY = this.state.currentY
       this.state.targetY = -600
       
-      this.cleanupBeforeHide()
-      
       const currentPosition = await this.mainWindow.outerPosition()
       void this.animateWindow(currentPosition.x, true)
+      await this.mainWindow.emit('window_hidden', null)
     } catch (err) {
       console.error('Failed to hide window:', err)
     }

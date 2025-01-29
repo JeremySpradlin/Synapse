@@ -7,7 +7,9 @@
 
 use tauri::{
     GlobalShortcutManager, Manager, PhysicalPosition, Monitor, Window,
+    WindowBuilder, WindowUrl,
 };
+use log::{error, info, warn};
 
 mod settings;
 mod commands;
@@ -46,33 +48,129 @@ pub(crate) fn center_window_horizontally(window: &Window, monitor: &Monitor) -> 
     Ok(())
 }
 
-/// Sets up window focus event handlers
-/// 
-/// Configures automatic window hiding when focus is lost and other
-/// focus-related behaviors.
-fn setup_window_focus_handlers(window: &Window) -> WindowResult<()> {
-    let win = window.clone();
-    
-    window.on_window_event(move |event| {
-        match event {
-            tauri::WindowEvent::Focused(focused) => {
-                if !focused {
-                    // Automatically hide window when focus is lost
-                    if let Err(e) = win.hide() {
-                        eprintln!("Failed to hide window: {}", e);
+/// Window management functions for handling window state and transitions
+mod window_management {
+    use super::*;
+
+    /// Shows the main window and ensures proper state
+    pub fn show_main_window(window: &Window) -> WindowResult<()> {
+        info!("Showing main window");
+        // Ensure proper window position
+        if let Ok(Some(monitor)) = window.primary_monitor() {
+            center_window_horizontally(window, &monitor)?;
+        } else {
+            warn!("Could not get primary monitor, window may not be centered");
+        }
+
+        // Configure and show window
+        window.set_always_on_top(true)?;
+        window.show()?;
+        window.set_focus()?;
+        info!("Main window shown and focused");
+
+        Ok(())
+    }
+
+    /// Hides the main window and cleans up state
+    pub fn hide_main_window(window: &Window) -> WindowResult<()> {
+        info!("Hiding main window");
+        window.hide()?;
+        info!("Main window hidden");
+        Ok(())
+    }
+
+    /// Sets up window focus event handlers
+    pub fn setup_window_focus_handlers(window: &Window) -> WindowResult<()> {
+        info!("Setting up window focus handlers");
+        let win = window.clone();
+        
+        window.on_window_event(move |event| {
+            match event {
+                tauri::WindowEvent::Focused(focused) => {
+                    if !focused {
+                        info!("Window lost focus, hiding");
+                        if let Err(e) = hide_main_window(&win) {
+                            error!("Failed to hide window on focus loss: {}", e);
+                        }
                     }
                 }
+                _ => {}
             }
-            _ => {}
-        }
-    });
+        });
 
+        Ok(())
+    }
+
+    /// Handles transitioning between main and settings windows
+    pub fn handle_settings_window(window: &Window) -> WindowResult<()> {
+        info!("Opening settings window");
+        let main_window = window.clone();
+        
+        // Create settings window
+        let settings = WindowBuilder::new(
+            &window.app_handle(),
+            "settings",
+            WindowUrl::App("settings.html".into())
+        )
+        .title("Settings")
+        .inner_size(600.0, 400.0)
+        .center()
+        .decorations(true)
+        .always_on_top(false)
+        .build()?;
+
+        // Handle settings window closure
+        settings.on_window_event(move |event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                info!("Settings window closing, restoring main window");
+                if let Err(e) = show_main_window(&main_window) {
+                    error!("Failed to restore main window: {}", e);
+                }
+            }
+        });
+
+        // Show settings window
+        settings.show()?;
+        settings.set_focus()?;
+        info!("Settings window shown and focused");
+
+        // Hide main window
+        hide_main_window(window)?;
+
+        Ok(())
+    }
+}
+
+/// Sets up the global shortcut for toggling window visibility
+fn setup_global_shortcut(app: &tauri::App) -> WindowResult<()> {
+    let window = app.get_window("main")
+        .ok_or("Failed to get main window")?;
+    let mut shortcut_manager = app.global_shortcut_manager();
+    
+    info!("Registering global shortcut (CommandOrControl+Shift+Space)");
+    shortcut_manager.register("CommandOrControl+Shift+Space", move || {
+        info!("Global shortcut triggered");
+        
+        if let Ok(is_visible) = window.is_visible() {
+            info!("Window visibility state: {}", is_visible);
+            
+            let result = if is_visible {
+                window_management::hide_main_window(&window)
+            } else {
+                window_management::show_main_window(&window)
+            };
+
+            if let Err(e) = result {
+                error!("Failed to toggle window visibility: {}", e);
+            }
+        }
+    })?;
+    
+    info!("Global shortcut registered successfully");
     Ok(())
 }
 
 /// Initializes the application window
-/// 
-/// Sets up the window's initial state, position, and appearance.
 fn setup_window(window: &Window) -> WindowResult<()> {
     // Configure window appearance
     window.set_decorations(false)?;
@@ -84,48 +182,22 @@ fn setup_window(window: &Window) -> WindowResult<()> {
         center_window_horizontally(window, &monitor)?;
     }
 
-    Ok(())
-}
-
-/// Sets up the global shortcut for toggling window visibility
-/// 
-/// Configures Command/Ctrl + Shift + Space as the global shortcut
-/// for showing/hiding the window.
-fn setup_global_shortcut(app: &tauri::App) -> WindowResult<()> {
-    let window = app.get_window("main")
-        .ok_or("Failed to get main window")?;
-    let mut shortcut_manager = app.global_shortcut_manager();
-    
-    println!("Registering global shortcut...");
-    shortcut_manager.register("CommandOrControl+Shift+Space", move || {
-        println!("Shortcut triggered!");
-        
-        if let Ok(is_visible) = window.is_visible() {
-            println!("Current window visibility: {}", is_visible);
-            
-            if is_visible {
-                let _ = window.hide();
-                println!("Hiding window");
-            } else {
-                // Reposition and show window
-                if let Ok(Some(monitor)) = window.primary_monitor() {
-                    let _ = center_window_horizontally(&window, &monitor);
-                }
-                let _ = window.show();
-                let _ = window.set_focus();
-                let _ = window.set_always_on_top(true);
-                println!("Showing window and setting focus");
-            }
+    // Listen for settings window events
+    let window_clone = window.clone();
+    window.listen("open_settings", move |_| {
+        if let Err(e) = window_management::handle_settings_window(&window_clone) {
+            eprintln!("Failed to handle settings window: {}", e);
         }
-    })?;
-    
-    println!("Global shortcut registered successfully");
+    });
+
     Ok(())
 }
 
 #[tokio::main]
 async fn main() {
-    println!("Setting up application...");
+    // Initialize logging
+    env_logger::init();
+    info!("Initializing Synapse application");
 
     let settings_manager = SettingsManager::new()
         .await
@@ -143,18 +215,19 @@ async fn main() {
             commands::delete_api_key,
         ])
         .setup(|app| {
+            info!("Setting up main application window");
             let window = app.get_window("main")
                 .ok_or("Failed to get main window")?;
             
             // Initialize window systems
-            setup_window_focus_handlers(&window)?;
+            window_management::setup_window_focus_handlers(&window)?;
             setup_window(&window)?;
             setup_global_shortcut(app)?;
             
             #[cfg(any(windows, target_os = "macos"))]
             set_shadow(&window, true).expect("Failed to set window shadow");
             
-            println!("Window initialized and hidden");
+            info!("Application initialization complete");
             Ok(())
         })
         .run(tauri::generate_context!())
