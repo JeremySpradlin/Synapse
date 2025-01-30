@@ -28,17 +28,9 @@ export interface AnthropicConfig {
     max_tokens: number;
 }
 
-export enum Theme {
-    Light = 'light',
-    Dark = 'dark',
-    System = 'system'
-}
+export type Theme = 'light' | 'dark' | 'system';
 
-export enum StartupBehavior {
-    Normal = 'normal',
-    Minimized = 'minimized',
-    Hidden = 'hidden'
-}
+export type StartupBehavior = 'normal' | 'minimized' | 'hidden';
 
 export interface KeyboardShortcuts {
     toggle_window: string;
@@ -51,8 +43,8 @@ export const DEFAULT_SETTINGS: Settings = {
     preferences: {
         window_width: 800,
         window_height: 600,
-        theme: Theme.System,
-        startup_behavior: StartupBehavior.Normal,
+        theme: 'system',
+        startup_behavior: 'normal',
         keyboard_shortcuts: {
             toggle_window: 'CommandOrControl+Shift+Space',
             clear_conversation: 'CommandOrControl+L',

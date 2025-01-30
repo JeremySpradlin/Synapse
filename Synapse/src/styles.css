@@ -437,3 +437,81 @@ body {
     border: 1px solid currentColor;
   }
 }
+
+/* Settings Header */
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.save-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.save-button:hover {
+  background-color: var(--primary-color-hover);
+}
+
+.save-button:disabled {
+  background-color: var(--disabled-color);
+  cursor: not-allowed;
+}
+
+.save-status {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.save-status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-loading::before {
+  background-color: var(--warning-color);
+  animation: pulse 1s infinite;
+}
+
+.status-saved::before {
+  background-color: var(--success-color);
+}
+
+.status-unsaved::before {
+  background-color: var(--warning-color);
+}
+
+.status-saving::before {
+  background-color: var(--info-color);
+  animation: pulse 1s infinite;
+}
+
+.status-error::before {
+  background-color: var(--error-color);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}

@@ -6,6 +6,7 @@
  */
 
 import { getCurrent, PhysicalPosition } from '@tauri-apps/api/window'
+import { invoke } from '@tauri-apps/api/tauri'
 
 /** Message interface for chat messages */
 interface ChatMessage {
@@ -106,7 +107,7 @@ class WindowManager {
   private async initWindow() {
     try {
       // Initialize UI elements
-      this.initializeUIElements()
+      await this.initializeUIElements()
       
       // Setup all event handlers
       await this.setupEventListeners()
@@ -126,7 +127,7 @@ class WindowManager {
   /**
    * Initializes UI element references
    */
-  private initializeUIElements() {
+  private async initializeUIElements() {
     this.chatInput = document.querySelector('.chat-input')
     this.sendButton = document.querySelector('.send-button')
     this.chatHistory = document.querySelector('.chat-history')
@@ -139,7 +140,7 @@ class WindowManager {
     // Set up settings button click handler
     this.settingsButton?.addEventListener('click', async () => {
       try {
-        await this.mainWindow.emit('open_settings')
+        await invoke('open_settings_window')
       } catch (err) {
         console.error('Failed to open settings:', err)
       }

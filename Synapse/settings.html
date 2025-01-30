@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Synapse Settings</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="settings-page">
+      <div class="settings-header">
+        <h1>Settings</h1>
+        <div class="settings-actions">
+          <span id="save-status" class="save-status"></span>
+          <button id="save-settings" class="save-button">
+            Save Changes
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-content">
+        <section class="settings-section" id="api">
+          <h2>API Configuration</h2>
+          
+          <div class="settings-group">
+            <h3>OpenAI</h3>
+            <div class="form-row">
+              <label for="openai-api-key">API Key</label>
+              <input
+                type="password"
+                id="openai-api-key"
+                placeholder="sk-..."
+              />
+              <div class="form-description">
+                Your OpenAI API key. This will be stored securely in your system's keychain.
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="openai-model">Default Model</label>
+              <select id="openai-model">
+                <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Anthropic</h3>
+            <div class="form-row">
+              <label for="anthropic-api-key">API Key</label>
+              <input
+                type="password"
+                id="anthropic-api-key"
+                placeholder="sk-ant-..."
+              />
+              <div class="form-description">
+                Your Anthropic API key. This will be stored securely in your system's keychain.
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="anthropic-model">Default Model</label>
+              <select id="anthropic-model">
+                <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                <option value="claude-3-haiku-20240229">Claude 3 Haiku</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-section" id="appearance">
+          <h2>Appearance</h2>
+          <div class="settings-group">
+            <div class="form-row">
+              <label for="theme">Theme</label>
+              <select id="theme">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-section" id="behavior">
+          <h2>Behavior</h2>
+          <div class="settings-group">
+            <div class="form-row">
+              <label>
+                <input
+                  type="checkbox"
+                  id="start-minimized"
+                />
+                Start minimized
+              </label>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/components/settings/settings.ts"></script>
+  </body>
+</html> 
