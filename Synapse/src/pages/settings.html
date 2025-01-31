@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings - Synapse</title>
+    <link rel="stylesheet" href="/src/pages/settings.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="settings-container">
+        <header class="settings-header">
+          <h1>Settings</h1>
+        </header>
+
+        <!-- API Configuration Section -->
+        <section class="settings-section">
+          <h2>API Configuration</h2>
+          
+          <!-- OpenAI Settings -->
+          <div class="setting-group">
+            <h3>OpenAI</h3>
+            <div class="input-group">
+              <label for="openai-api-key">API Key</label>
+              <input 
+                type="password" 
+                id="openai-api-key" 
+                placeholder="sk-..." 
+                spellcheck="false"
+                autocomplete="off"
+              >
+              <p class="help-text">Your OpenAI API key for accessing GPT models</p>
+            </div>
+            <div class="input-group">
+              <label for="openai-model">Default Model</label>
+              <select id="openai-model">
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              </select>
+              <p class="help-text">Select your preferred OpenAI model</p>
+            </div>
+          </div>
+
+          <!-- Anthropic Settings -->
+          <div class="setting-group">
+            <h3>Anthropic</h3>
+            <div class="input-group">
+              <label for="anthropic-api-key">API Key</label>
+              <input 
+                type="password" 
+                id="anthropic-api-key" 
+                placeholder="sk-ant-..." 
+                spellcheck="false"
+                autocomplete="off"
+              >
+              <p class="help-text">Your Anthropic API key for accessing Claude models</p>
+            </div>
+            <div class="input-group">
+              <label for="anthropic-model">Default Model</label>
+              <select id="anthropic-model">
+                <option value="claude-3-opus">Claude 3 Opus</option>
+                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                <option value="claude-2.1">Claude 2.1</option>
+              </select>
+              <p class="help-text">Select your preferred Anthropic model</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Appearance Section -->
+        <section class="settings-section">
+          <h2>Appearance</h2>
+          <div class="setting-group">
+            <div class="input-group">
+              <label for="theme">Theme</label>
+              <select id="theme">
+                <option value="system">Match System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+              <p class="help-text">Choose how Synapse should look</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Behavior Section -->
+        <section class="settings-section">
+          <h2>Behavior</h2>
+          <div class="setting-group">
+            <div class="checkbox-group">
+              <input type="checkbox" id="start-minimized">
+              <label for="start-minimized">Start minimized</label>
+            </div>
+            <p class="help-text">When enabled, Synapse will start minimized to the system tray</p>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html> 

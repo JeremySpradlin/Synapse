@@ -17,6 +17,10 @@ rust-version = "1.70"
 name = "synapse_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[[bin]]
+name = "synapse"
+path = "src/main.rs"
+
 [build-dependencies]
 tauri-build = { version = "1.5", features = [] }
 
@@ -50,14 +54,26 @@ tauri = { version = "1.5", features = [
 window-shadows = "0.2"
 
 # Settings System
-tokio = { version = "1.36", features = ["full"] }
+tokio = { version = "1.36", features = ["full", "sync"] }
+futures = "0.3"
+async-trait = "0.1"
 thiserror = "1.0"
 keyring = "2.0"
-tempfile = "3.8"
+tempfile = { version = "3.8", optional = true }
 
 # Logging
 log = "0.4"
 env_logger = "0.11"
+
+# Added Dependencies
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.7", features = ["v4", "serde"] }
+reqwest = { version = "0.11", features = ["json"] }
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]
+dev-tools = ["tempfile"]
 
 [profile.release]
 panic = "abort"

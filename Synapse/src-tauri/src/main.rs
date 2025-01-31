@@ -7,16 +7,10 @@
 
 use tauri::{
     GlobalShortcutManager, Manager, PhysicalPosition, Monitor, Window,
+    WindowBuilder, WindowUrl, generate_context,
 };
 use log::{error, info, warn};
-use std::sync::Arc;
-
-mod settings;
-mod commands;
-
-use settings::SettingsManager;
 use window_shadows::set_shadow;
-use commands::{get_settings, update_settings, store_api_key, get_api_key, delete_api_key};
 
 /// Error types for window management operations
 #[derive(Debug, thiserror::Error)]
@@ -118,27 +112,6 @@ mod window_management {
 
         Ok(())
     }
-
-    /// Sets up the settings window with proper event handling
-    pub fn setup_settings_window(
-        _window: &Window,
-        settings_window: &Window,
-        main_window: &Window,
-    ) -> WindowResult<()> {
-        info!("Setting up settings window event handlers");
-        
-        let main_window = main_window.clone();
-        settings_window.on_window_event(move |event| {
-            if let tauri::WindowEvent::CloseRequested { .. } = event {
-                info!("Settings window closing, restoring main window");
-                if let Err(e) = show_main_window(&main_window) {
-                    error!("Failed to restore main window: {}", e);
-                }
-            }
-        });
-
-        Ok(())
-    }
 }
 
 /// Sets up the global shortcut for toggling window visibility
@@ -170,52 +143,14 @@ fn setup_global_shortcut(app: &tauri::App) -> WindowResult<()> {
     Ok(())
 }
 
-/// Command handler for opening the settings window
-#[tauri::command]
-async fn open_settings_window(window: tauri::Window) -> Result<(), String> {
-    let app = window.app_handle();
-    let main_window = window.clone();
-    
-    // Try to get existing settings window
-    if let Some(settings_window) = app.get_window("settings") {
-        settings_window.show().map_err(|e| e.to_string())?;
-        settings_window.set_focus().map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-    
-    // Create new settings window if it doesn't exist
-    let settings_window = tauri::WindowBuilder::new(
-        &app,
-        "settings",
-        tauri::WindowUrl::App("settings.html".into())
-    )
-    .title("Synapse Settings")
-    .inner_size(800.0, 600.0)
-    .center()
-    .decorations(true)
-    .resizable(true)
-    .build()
-    .map_err(|e| e.to_string())?;
-
-    // Set up window event handlers
-    window_management::setup_settings_window(&window, &settings_window, &main_window)
-        .map_err(|e| e.to_string())?;
-    
-    // Show and focus the window
-    settings_window.show().map_err(|e| e.to_string())?;
-    settings_window.set_focus().map_err(|e| e.to_string())?;
-    
-    Ok(())
-}
-
 /// Initialize event listeners for the main window
 fn setup_window_events(window: &Window) -> WindowResult<()> {
     let window_clone = window.clone();
     window.listen("open_settings", move |_| {
         let window = window_clone.clone();
         tauri::async_runtime::spawn(async move {
-            if let Err(e) = open_settings_window(window).await {
-                error!("Failed to open settings window: {}", e);
+            if let Err(e) = synapse_lib::commands::open_settings_window(window).await {
+                error!("Failed to open settings window: {} ({:?})", e, e);
             }
         });
     });
@@ -229,22 +164,8 @@ async fn main() {
     env_logger::init();
     info!("Initializing Synapse application");
 
-    let settings_manager = SettingsManager::new()
+    let app = synapse_lib::create_app()
         .await
-        .expect("Failed to initialize settings manager");
-
-    tauri::Builder::default()
-        .manage(settings_manager)
-        .invoke_handler(tauri::generate_handler![
-            open_settings_window,
-            commands::get_window_position,
-            commands::set_window_position,
-            get_settings,
-            update_settings,
-            store_api_key,
-            get_api_key,
-            delete_api_key,
-        ])
         .setup(|app| {
             info!("Setting up main application window");
             let window = app.get_window("main")
@@ -262,6 +183,6 @@ async fn main() {
             info!("Application initialization complete");
             Ok(())
         })
-        .run(tauri::generate_context!())
+        .run(generate_context!())
         .expect("error while running tauri application");
 }

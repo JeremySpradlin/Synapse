@@ -59,12 +59,12 @@
         "visible": false
       },
       {
-        "width": 800,
-        "height": 600,
+        "width": 1400,
+        "height": 900,
         "resizable": true,
         "decorations": true,
-        "transparent": false,
-        "url": "settings.html",
+        "transparent": true,
+        "url": "/src/pages/settings.html",
         "title": "Synapse Settings",
         "visible": false,
         "label": "settings"
